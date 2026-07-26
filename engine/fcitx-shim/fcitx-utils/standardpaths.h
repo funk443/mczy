@@ -1,4 +1,4 @@
-// ponytail: no-op shim for fcitx's StandardPaths. mczy-engine resolves data
+// No-op shim for fcitx's StandardPaths. mczy-engine resolves data
 // paths itself (CLI arg / env), so PathCompat.h only needs this to *compile*,
 // never to actually locate anything. Real impl lives in fcitx5; not linked here.
 #ifndef MCZY_SHIM_FCITX_UTILS_STANDARDPATHS_H_

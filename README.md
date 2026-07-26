@@ -32,9 +32,12 @@
 - macOS:`brew install cmake icu4c`
 - Debian/Ubuntu:`sudo apt install build-essential cmake libicu-dev`
 
-clone 後載入 `mczy.el`,首次按 `C-\` 會詢問並自動編譯引擎(submodule + CMake,進度顯示在
-compilation buffer;等同 `M-x mczy-compile-engine`),編完再按一次就能打字。手動編譯見
-[`engine/README.md`](engine/README.md)。
+clone 後載入 `mczy.el`,首次按 `C-\` 會詢問並自動編譯引擎(進度顯示在 compilation buffer;
+等同 `M-x mczy-compile-engine`),編完再按一次就能打字。
+
+答應那句 `y-or-n` 等於同意執行 `git submodule update --init`(自 GitHub 取得上游
+McBopomofo 原始碼,**釘在固定 commit**)加兩道 cmake。不想自動編譯就別按 `y`,改照
+[`engine/README.md`](engine/README.md) 手動建置。
 
 ### 疑難排解:CMake 選到 GCC 9
 
@@ -188,6 +191,15 @@ mode line 顯示 **麥注**(注音)或 **麥Aa**(英文)。
 刻意不採用 McBopomofo 之名:MIT 授權涵蓋的是程式碼而非名稱,另取名可避免與上游混淆——
 這個 Emacs 前端的問題該回報到本 repo,不是 openvanilla。引擎出處在本檔與
 [`LICENSE`](LICENSE) 中標示。
+
+## 安全與隱私
+
+輸入法看得到你打的每一個字,所以講清楚:麥注**不連網、無遙測**,引擎是本機 subprocess,
+自訂詞是留在本機的純文字檔。上游那個會把選取詞組成 URL 丟給瀏覽器的
+`DictionaryService`,在本專案被換成 no-op stub,不編譯進去。
+
+完整的信任模型、範圍界定與漏洞回報管道見 [`SECURITY.md`](SECURITY.md)。
+**發現漏洞請不要開公開 issue。**
 
 ## 授權
 

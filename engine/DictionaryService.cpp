@@ -6,7 +6,7 @@
 // path. So we replace the upstream .cpp (which pulls fcitx i18n / startProcess /
 // json-c) with this stub instead of compiling it.
 //
-// ponytail: stub, no services. Add real lookups only if mczy ever wants the
+// Stub, no services. Add real lookups only if mczy ever wants the
 // "look up selected phrase" feature; until then this is the whole thing.
 #include "DictionaryService.h"
 

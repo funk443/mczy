@@ -63,7 +63,7 @@ class FileUserPhraseAdder : public UserPhraseAdder {
                      const std::string_view& phrase) override {
     {
       std::ofstream out(path_, std::ios::app);
-      // ponytail: one shared dict file; a second engine instance appending
+      // One shared dict file; a second engine instance appending
       // concurrently could interleave lines.  Fine for single-composition use;
       // add locking only if multi-buffer simultaneous adds become real.
       if (!out) return;
@@ -72,7 +72,7 @@ class FileUserPhraseAdder : public UserPhraseAdder {
     lm_->loadUserPhrases(path_.c_str(), nullptr);
   }
 
-  // ponytail: mark-to-add only for v1; excluded-phrase removal is a later add.
+  // Mark-to-add only for v1; excluded-phrase removal is a later add.
   void removeUserPhrase(const std::string_view&,
                         const std::string_view&) override {}
 
@@ -164,7 +164,7 @@ void emitState(InputState* s) {
 }
 
 // --- tiny sexp command parser (line = one request) ---------------------------
-// ponytail: line-oriented, single-quoted-token tokenizer — not a general sexp
+// Line-oriented, single-quoted-token tokenizer — not a general sexp
 // reader. The request grammar is flat; a full parser would be dead weight.
 
 struct Cmd {

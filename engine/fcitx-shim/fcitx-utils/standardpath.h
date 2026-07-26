@@ -1,4 +1,4 @@
-// ponytail: no-op shim for fcitx's legacy StandardPath API. Only reached if
+// No-op shim for fcitx's legacy StandardPath API. Only reached if
 // USE_LEGACY_FCITX5_API_STANDARDPATH is defined (it isn't, in our build) — kept
 // so PathCompat.h compiles regardless of which branch its #if picks.
 #ifndef MCZY_SHIM_FCITX_UTILS_STANDARDPATH_H_

@@ -2,7 +2,7 @@
 # M1 acceptance self-check: 餵 key → read state → 選字 / 回改 / 整句重排 / commit.
 # Drives the built mczy-engine through the same sequence upstream's KeyHandler
 # test uses, plus a homophone re-selection, and asserts on the emitted sexp.
-# ponytail: grep assertions, no test framework — the engine is the thing under test.
+# Grep assertions, no test framework — the engine is the thing under test.
 set -euo pipefail
 cd "$(dirname "$0")"
 

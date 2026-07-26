@@ -393,7 +393,7 @@ and ICU (macOS: brew install cmake icu4c)."
       (while (not done-seen)
         (unless (process-live-p proc)
           (error "mczy-engine exited before replying to %S" command))
-        ;; ponytail: blocking round-trip inside the translate loop is safe
+        ;; Blocking round-trip inside the translate loop is safe
         ;; here -- plain synchronous elisp in one command-loop turn, like
         ;; quail's read loop minus the subprocess.  The minibuffer/isearch
         ;; reentrancy case is M3b.
@@ -823,7 +823,7 @@ keys drive the engine, and the named keys below override the defaults."
                   (lambda () (interactive) (mczy--handle-named-key name))))
     ;; Shift+Left/Right (and GUI-only C-S-b/C-S-f mirrors): mark a phrase
     ;; span to add to the user dictionary.
-    ;; ponytail: TTY can't distinguish C-S-f/C-S-b; pick a TTY-reachable
+    ;; TTY can't distinguish C-S-f/C-S-b; pick a TTY-reachable
     ;; alternative (e.g. a prefix or M- combo) if that matters.
     (pcase-dolist (`(,key . ,name)
                    `(([S-left] . left) ([S-right] . right)
