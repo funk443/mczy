@@ -453,7 +453,7 @@ mark, Enter to add, Enter to commit -- and the phrase lands in the file."
         (mczy--stop-process)
         (delete-file tmp)))))
 
-;;; M3c: double-space Chinese/English toggle
+;;; M3c: space-triggered Chinese/English toggle (and its `mczy-space-toggle' gate)
 
 (ert-deftest mczy-single-space-toggles-to-english-when-idle ()
   (mczy-test--needs-engine)
@@ -526,6 +526,48 @@ only from an empty buffer."
           (should (equal (mczy--input-method ?\s) (list ?\s)))
           (should (= mczy--space-run 1))
           (should mczy--english-mode))
+      (mczy--stop-process))))
+
+(ert-deftest mczy-space-toggle-nil-disables-both-directions ()
+  "With `mczy-space-toggle' nil, space never switches mode either way."
+  (mczy-test--needs-engine)
+  (mczy-test--with-buffer
+    (unwind-protect
+        (let ((mczy-space-toggle nil))
+          (mczy--start-process)
+          ;; bopomofo: a space in the empty state must not leave the engine
+          (mczy--input-method ?\s)
+          (should-not mczy--english-mode)
+          ;; English: two spaces stay two spaces
+          (setq mczy--english-mode t mczy--space-run 0)
+          (should (equal (mczy--input-method ?\s) (list ?\s)))
+          (should (equal (mczy--input-method ?\s) (list ?\s)))
+          (should mczy--english-mode))
+      (mczy--stop-process))))
+
+(ert-deftest mczy-space-toggle-directions-are-independent ()
+  "`to-english' and `to-chinese' each enable exactly one direction."
+  (mczy-test--needs-engine)
+  (mczy-test--with-buffer
+    (unwind-protect
+        (progn
+          (mczy--start-process)
+          ;; to-english: leaving bopomofo works, coming back does not
+          (let ((mczy-space-toggle 'to-english))
+            (should (equal (mczy--input-method ?\s) (list ?\s)))
+            (should mczy--english-mode)
+            (setq mczy--space-run 0)
+            (should (equal (mczy--input-method ?\s) (list ?\s)))
+            (should (equal (mczy--input-method ?\s) (list ?\s)))
+            (should mczy--english-mode))
+          ;; to-chinese: coming back works, leaving bopomofo does not
+          (let ((mczy-space-toggle 'to-chinese))
+            (setq mczy--english-mode t mczy--space-run 0)
+            (should (equal (mczy--input-method ?\s) (list ?\s)))
+            (should (null (mczy--input-method ?\s)))
+            (should-not mczy--english-mode)
+            (mczy--input-method ?\s)
+            (should-not mczy--english-mode)))
       (mczy--stop-process))))
 
 (ert-deftest mczy-minibuffer-exit-cleans-up ()

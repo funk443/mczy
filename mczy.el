@@ -23,7 +23,9 @@
 ;; Committed text is returned to the command loop as events; a key the
 ;; engine does not absorb (`(done nil)') falls through to Emacs.  In
 ;; bopomofo mode a single space (empty buffer) outputs a space and switches
-;; to English; in English mode two consecutive spaces switch back.
+;; to English; in English mode two consecutive spaces switch back.  Either
+;; direction can be turned off with `mczy-space-toggle', leaving the
+;; explicit `mczy-toggle-english' as the way to switch.
 
 ;;; Code:
 
@@ -92,6 +94,36 @@ Passed to mczy-engine, which creates it if missing, appends new phrases,
 and reloads it so an added phrase is immediately selectable.  Kept out of
 the repository (under the user's Emacs directory) by default."
   :type 'file
+  :group 'mczy)
+
+(defcustom mczy-space-toggle 'both
+  "Which space-triggered Chinese/English switches are enabled.
+
+The two directions are deliberately asymmetric, so they can be enabled
+separately:
+
+  bopomofo -> English   a single space in an *empty* composition emits one
+                        space and leaves the engine (never fires mid-word,
+                        so tone-1 spaces are unaffected)
+  English -> bopomofo   two consecutive spaces switch back, collapsing to
+                        a single space
+
+Value is one of:
+
+  `both'        both directions (default)
+  `to-english'  only bopomofo -> English
+  `to-chinese'  only English -> bopomofo
+  nil           neither; switch explicitly instead
+
+With a direction disabled, space keeps its plain meaning there: in bopomofo
+mode it goes to the engine, in English mode it self-inserts.  The explicit
+commands `mczy-toggle-english', `mczy-set-english' and `mczy-set-chinese'
+work regardless of this setting; bind one of them if you turn the automatic
+switching off."
+  :type '(choice (const :tag "Both directions" both)
+                 (const :tag "Only bopomofo -> English" to-english)
+                 (const :tag "Only English -> bopomofo" to-chinese)
+                 (const :tag "Disabled" nil))
   :group 'mczy)
 
 (defcustom mczy-title "麥"
@@ -676,19 +708,25 @@ state, and Enter on an acceptable mark adds the phrase to the user dict."
   (setq mczy--space-run 0)
   (mczy--run-command (list 'key name 'shift) (this-single-command-raw-keys)))
 
+(defun mczy--space-toggles-p (direction)
+  "Non-nil when `mczy-space-toggle' enables DIRECTION.
+DIRECTION is `to-english' or `to-chinese'."
+  (memq mczy-space-toggle (list 'both direction)))
+
 (defun mczy--handle-space ()
   "Handle space in Chinese mode.
 In a multi-page candidate box, advance one page and wrap after the last page.
 From an empty buffer, immediately output a space and switch to English (so the
-toggle never interferes with tone-1 spaces mid-word like 窩窩).  Other spaces
-drive the engine as before."
+toggle never interferes with tone-1 spaces mid-word like 窩窩); this branch is
+gated on `mczy-space-toggle'.  Other spaces drive the engine as before."
   (interactive)
   (cond
    ((and (eq mczy--state 'choosing)
          (> (mczy--page-count) 1))
     (setq mczy--space-run 0)
     (mczy--page-move 1))
-   ((eq mczy--state 'empty)
+   ((and (eq mczy--state 'empty)
+         (mczy--space-toggles-p 'to-english))
         (setq mczy--result-events (append mczy--result-events (list ?\s)))
         (mczy--toggle-from-chinese))
    (t
@@ -871,9 +909,9 @@ handler ends the session or an unbound key sequence falls through."
 (defun mczy--input-method (key)
   "`input-method-function' entry point for KEY.
 Fall through verbatim in read-only or overriding-map contexts (matching
-`quail-input-method').  In English self-insert mode (entered via the
-double-space toggle) pass keys through, counting consecutive spaces to
-toggle back.  Otherwise start a composition session."
+`quail-input-method').  In English self-insert mode pass keys through,
+counting consecutive spaces to toggle back when `mczy-space-toggle' allows
+it.  Otherwise start a composition session."
   (cond
    ((or (and (or buffer-read-only
                  (and (get-char-property (point) 'read-only)
@@ -887,7 +925,8 @@ toggle back.  Otherwise start a composition session."
         overriding-local-map)
     (list key))
    (mczy--english-mode
-    (if (eq key ?\s)
+    (if (and (eq key ?\s)
+             (mczy--space-toggles-p 'to-chinese))
         (progn
           (cl-incf mczy--space-run)
           (if (>= mczy--space-run 2)

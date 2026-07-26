@@ -17,7 +17,7 @@
 - 正式 Emacs 輸入法:`C-\`(`toggle-input-method`)開關,行為與內建輸入法一致
 - 組字顯示為游標旁的 overlay(after-string),GUI 與 `emacs -nw` / SSH 終端都能打,不依賴 posframe / child frame
 - commit 後的字靠 [emacs-everywhere](https://github.com/tecosaur/emacs-everywhere) 送進 Emacs 以外的視窗
-- 雙空格中英快切:連按兩下空格在注音與 self-insert 間互換,適合短英文插入
+- 空格中英快切:空組字區按一下空格離開注音、英文模式連按兩下空格切回,適合短英文插入(可關閉)
 
 此外,在專案組織上:
 
@@ -93,6 +93,7 @@ cmake --build engine/build -j
 | `mczy-data-path` | `engine/vendor/.../data/data.txt`(相對 `mczy.el`) | McBopomofo 詞庫 `data.txt` 路徑 |
 | `mczy-candidate-keys` | `"1234567890"` | 選字狀態下的候選鍵 |
 | `mczy-user-phrases-path` | `~/.emacs.d/mczy-user-phrases.txt` | 框選加詞寫入的個人詞庫 |
+| `mczy-space-toggle` | `both` | 空格觸發中英切換要開哪幾個方向,見下節 |
 | `mczy-response-timeout` | `2.0` | 等待引擎完成一回合的秒數 |
 
 常用範例:
@@ -111,6 +112,44 @@ cmake --build engine/build -j
 範例檔後半就是一整組掛在 Shift+6 的顏文字。
 
 候選鍵也可在互動中以 `M-x mczy-set-candidate-keys` 即時更換。
+
+## 中英切換
+
+短英文(變數名、網址、一句 `TODO`)不值得為它離開輸入法,所以空格兼任切換鍵。
+兩個方向**刻意不對稱**:
+
+| 方向 | 觸發 | 行為 |
+| --- | --- | --- |
+| 注音 → 英文 | **組字區為空**時按**一下**空格 | 輸出一個半形空格,切到 self-insert |
+| 英文 → 注音 | 連按**兩下**空格 | 收斂成一個半形空格,切回注音 |
+
+不對稱是必要的。離開方向若也要雙空格,就會跟注音的**一聲**撞車——「窩窩」這種
+連續一聲詞打起來會被誤判成切換。限定在**空組字區**才觸發,一聲永遠安全:只要
+手上有沒送出的注音,空格就照常餵給引擎(選字狀態下則是翻下一頁)。
+
+覺得太靈敏就用 `mczy-space-toggle` 關掉,可以只關單邊:
+
+```elisp
+(setq mczy-space-toggle 'to-chinese)   ; 只留「英文 → 注音」,空格不再把你踢出注音
+(setq mczy-space-toggle nil)           ; 兩邊都關,只用明確指令切換
+```
+
+可選 `both`(預設)、`to-english`、`to-chinese`、`nil`。關掉的那個方向,空格就回到
+它的本分:注音模式餵引擎,英文模式自行插入。
+
+不論這個設定為何,下列指令都能用,關掉自動切換時建議綁一個:
+
+| 指令 | 作用 |
+| --- | --- |
+| `mczy-toggle-english` | 中英互換 |
+| `mczy-set-english` | 切到英文 |
+| `mczy-set-chinese` | 切到注音 |
+
+```elisp
+(global-set-key (kbd "<f9>") #'mczy-toggle-english)
+```
+
+mode line 會跟著顯示 **麥注**(注音)或 **麥Aa**(英文)。
 
 ## 與類似方案的比較
 
