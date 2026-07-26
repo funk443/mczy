@@ -1,0 +1,164 @@
+# 麥注 mczy — 小麥注音(McBopomofo)的 Emacs 版
+
+> 麥注(mczy)是把[小麥注音](https://github.com/openvanilla/McBopomofo)請進 Emacs 裡住下來的整句注音輸入法。
+> 組字在 Emacs 裡乖乖完成,打好的字再牽著手交給 emacs-everywhere,送去 Emacs 以外的任何視窗。
+
+本專案是[小麥注音](https://github.com/openvanilla/McBopomofo)的 **Emacs 版本**:把它的開源組句引擎與互動編輯器
+(InputController)編成一個自包的 stdio 小程式,讓 Emacs 透過 stdio 牽著它走。核心打字手感與小麥注音同步:
+
+- 整句智慧組字:由 Gramambular2 在讀音節點格子上走出機率最高的一整句
+- 同音字回改:游標移回任一節點重選,整句就地重排--節點仍記著自己的注音,不必刪掉重打
+- 自訂詞功能:組字時框選一段詞加入個人詞庫,引擎即時 reload,當下就選得到並提升排序
+- 記憶最近選字、候選分頁(冷僻字也翻得到)、候選鍵可自訂
+
+與 macOS / fcitx5 版的主要差別如下:
+
+- 宿主是 **Emacs**,不向系統輸入法框架(IBus / IMKit / TSF)註冊、不跑常駐 daemon、不要 root、不跟桌面搶熱鍵
+- 正式 Emacs 輸入法:`C-\`(`toggle-input-method`)開關,行為與內建輸入法一致
+- 組字顯示為游標旁的 overlay(after-string),GUI 與 `emacs -nw` / SSH 終端都能打,不依賴 posframe / child frame
+- commit 後的字靠 [emacs-everywhere](https://github.com/tecosaur/emacs-everywhere) 送進 Emacs 以外的視窗
+- 雙空格中英快切:連按兩下空格在注音與 self-insert 間互換,適合短英文插入
+
+此外,在專案組織上:
+
+- 重用 McBopomofo 的 controller(`KeyHandler` / `InputState`)與引擎,以 submodule vendor,**未改一行**
+- 直接使用 McBopomofo macOS 版產生的詞庫資料檔 `data.txt`
+- 唯一代價是引擎那顆 C++ binary 要在安裝時編譯一次(就像 `vterm` 編 `vterm-module` 那樣)
+
+## 安裝
+
+先備好編譯工具(只在首次編引擎時用到):`git`、CMake ≥ 3.16、C++20 編譯器、**ICU**。
+
+- macOS:`brew install cmake icu4c`
+- Debian/Ubuntu:`sudo apt install build-essential cmake libicu-dev`
+
+然後 clone、載入 `mczy.el`,首次 `C-\` 發現引擎還沒編譯時會詢問並自動編譯
+(submodule + CMake,進度顯示在 compilation buffer;等同 `M-x mczy-compile-engine`),
+編完再按一次 `C-\` 就能打字。想手動編譯,見 [`engine/README.md`](engine/README.md)。
+
+### 疑難排解: CMake 選到 GCC 9
+
+引擎使用 C++20,而上游原始碼的 UTF-8 識別字需要 GCC 10 以上。若自動編譯選到
+GCC 9,CMake 會失敗;即使後來安裝 GCC 11,原本的 `engine/build/` 仍快取了 GCC 9,
+必須先刪除後再重跑。
+
+可直接在 repo 根目錄手動以 GCC 11 重新建置:
+
+```sh
+rm -rf engine/build
+CC=gcc-11 CXX=g++-11 cmake -S engine -B engine/build -DCMAKE_BUILD_TYPE=Release
+cmake --build engine/build -j
+```
+
+若要保留 Emacs 的自動編譯流程,先刪除 `engine/build/`,再在目前的 Emacs session 評估下列兩行,
+最後執行 `M-x mczy-compile-engine` (或再次按 `C-\` 觸發自動編譯):
+
+```elisp
+(setenv "CC" "gcc-11")
+(setenv "CXX" "g++-11")
+```
+
+引擎與詞庫路徑預設相對 `mczy.el` 的位置,clone 進來原地編好就免設定:
+
+```elisp
+(use-package mczy
+  :load-path "~/src/mczy"            ; clone 出來的 repo 根目錄
+  :config
+  (setq default-input-method "chinese-mczy"))
+;; 用 C-\ (toggle-input-method) 開關
+```
+
+若用 `straight`,`mczy.el` 會被 symlink 進 `build/`、離開 `engine/`,因此預設引擎路徑會失效,
+需明指到 straight 的 repos clone(引擎也在那份 clone 裡編):
+
+```elisp
+(use-package mczy
+  :straight (mczy :type git :host github :repo "staryes/mczy")
+  :custom
+  (mczy-engine-path
+   "~/.emacs.d/straight/repos/mczy/engine/build/mczy-engine")
+  (mczy-data-path
+   "~/.emacs.d/straight/repos/mczy/engine/vendor/fcitx5-mcbopomofo/data/data.txt")
+  :config
+  (setq default-input-method "chinese-mczy"))
+```
+
+要把字送到 Emacs 以外的視窗,另裝 [`emacs-everywhere`](https://github.com/tecosaur/emacs-everywhere)。
+
+## 設定
+
+| 變數 | 預設 | 說明 |
+| --- | --- | --- |
+| `mczy-engine-path` | `engine/build/mczy-engine`(相對 `mczy.el`) | 引擎執行檔路徑 |
+| `mczy-data-path` | `engine/vendor/.../data/data.txt`(相對 `mczy.el`) | McBopomofo 詞庫 `data.txt` 路徑 |
+| `mczy-candidate-keys` | `"1234567890"` | 選字狀態下的候選鍵 |
+| `mczy-user-phrases-path` | `~/.emacs.d/mczy-user-phrases.txt` | 框選加詞寫入的個人詞庫 |
+| `mczy-response-timeout` | `2.0` | 等待引擎完成一回合的秒數 |
+
+常用範例:
+
+```elisp
+(setq mczy-candidate-keys "asdfghjkl"            ; 改用字母選字
+      mczy-user-phrases-path
+      (locate-user-emacs-file "mczy-user-phrases.txt"))
+```
+
+自建詞庫的格式(每行「詞 讀音」、`#` 註解)見 [`examples/user-phrases.txt`](examples/user-phrases.txt),
+可複製一份當自己詞庫的起點。
+
+除了一般詞,讀音欄也可以填標點 key 來收**表情符號**:掛在 `_punctuation_^` 下的詞,
+打 **Shift+6**(`^`)就會列成候選;同一個 key 下多行就是多個候選,翻頁選取。
+範例檔後半就是一整組掛在 Shift+6 的顏文字。
+
+候選鍵也可在互動中以 `M-x mczy-set-candidate-keys` 即時更換。
+
+## 與類似方案的比較
+
+| | mczy | 系統 IME(gcin / fcitx5 / 內建) | pyim | liberime / RIME |
+| --- | --- | --- | --- | --- |
+| 安裝/部署 | 編譯引擎一次,載入一個 `.el` | 每平台一套框架,需註冊/daemon/權限 | 純 elisp,免編譯 | 需編譯並接 librime |
+| 終端(`emacs -nw`)可用 | ✅ | 視框架而定 | ✅ | ✅ |
+| 整句組字 | ✅(Gramambular2) | 視引擎 | ✅ | ✅ |
+| 節點層同音字回改 | ✅ | 視引擎 | ✗(模型不同) | ✗(模型不同) |
+| 不跟桌面搶熱鍵 / 免 root | ✅ | ✗ | ✅ | ✅ |
+| 送字到 Emacs 以外 | ✅(emacs-everywhere) | 原生支援 | ✗ | ✗ |
+
+`mczy` 選 McBopomofo 引擎的關鍵,是它「整句打完 → 回頭改選同音字 → 整句重排 → 再送出」的手感:
+每個讀音節點都還記得自己的注音,因此回頭重選時引擎能就地重走路徑。pyim 與 liberime/RIME 雖有整句,
+但模型不同,給不出這種節點層回改;而把字交給 buffer 純文字編輯也補不回來--注音一旦離開引擎狀態就丟了。
+
+相較把同一顆小麥引擎塞進一般文字框,`mczy` 還多給兩層可編輯:commit 前的 buffer 自由編輯,以及
+emacs-everywhere 送出前的整體檢查。
+
+## 進一步閱讀
+
+- [`docs/architecture.md`](docs/architecture.md) - 內部架構、sexp over stdio 協定與 schema、組字顯示/操作邏輯、設計取捨
+- [`docs/m0-seam-notes.md`](docs/m0-seam-notes.md) - McBopomofo controller 從前端剝離的逐檔接縫考據
+
+## 相關專案
+
+- [McBopomofo](https://github.com/openvanilla/McBopomofo) - 引擎來源(Gramambular2 / Mandarin / McBopomofoLM)
+- [fcitx5-mcbopomofo](https://github.com/openvanilla/fcitx5-mcbopomofo) - 同一顆 controller 換非-macOS 前端的範例
+- [emacs-everywhere](https://github.com/tecosaur/emacs-everywhere) - 把組好的字送到 Emacs 之外
+- [sis(emacs-smart-input-source)](https://github.com/laishulu/emacs-smart-input-source) - 空格觸發中英切換的手感來源
+
+## 名稱由來
+
+**麥注**取自「小**麥**注音」,並沿用 Emacs 既有的注音輸入法命名慣例:內建的
+`chinese-etzy` 是倚天注音、`chinese-zozy` 是零壹注音,格式都是「廠牌 + 注音(ZY)」。
+本專案照同一格式寫作 `mczy`,註冊為 `chinese-mczy`;mode line 顯示 **麥注**(注音模式)
+與 **麥Aa**(英文模式)。
+
+名稱刻意不採用 McBopomofo 本身。MIT 授權涵蓋的是程式碼而非名稱,套件另取名可避免與上游
+混淆——這個 Emacs 前端的問題該回報到本 repo,而不是 openvanilla。引擎的出處在 README
+與 [`LICENSE`](LICENSE) 中明確標示。
+
+## 授權
+
+本專案自身的程式碼(`mczy.el`、`engine/main.cpp`、`engine/DictionaryService.cpp`、建置腳本)
+以 **MIT** 釋出,見 [`LICENSE`](LICENSE)。
+
+引擎重用的 McBopomofo 原始碼與詞庫 `data.txt` 皆來自上游
+[`fcitx5-mcbopomofo`](https://github.com/openvanilla/fcitx5-mcbopomofo)(同為 **MIT**,
+見 `engine/vendor/fcitx5-mcbopomofo/LICENSE.txt`)。這份 repo **不重新散布**任何上游程式碼或詞庫檔:
+它們以 git submodule 釘在上游 commit,由使用者在 clone 時自上游取得。

@@ -1,0 +1,74 @@
+# mczy 自建詞庫範例，可複製一份當作自己詞庫的起點。
+# 格式與 McBopomofo 相同：每行「詞 讀音」，讀音以 - 連接注音音節，
+# 「#」開頭的行是註解。
+#
+# 組字時框選加詞（Shift+←/→ 再 Enter）會自動附加到
+# `mczy-user-phrases-path' 指到的檔案；要改用自己維護的檔案：
+#   (setq mczy-user-phrases-path "~/path/to/user-phrases.txt")
+麥注 ㄇㄞˋ-ㄓㄨˋ
+自訂詞 ㄗˋ-ㄉㄧㄥˋ-ㄘˊ
+(≧Д≦) _punctuation_^
+（;≧皿≦） _punctuation_^
+(⁎˃ᆺ˂) _punctuation_^
+(╬Ò‸Ó) _punctuation_^
+<(｀^´)> _punctuation_^
+(>д<) _punctuation_^
+(ꐦಠ皿ಠ) _punctuation_^
+(｀Д´) _punctuation_^
+(;｀O´)o _punctuation_^
+o(-`д´-｡) _punctuation_^
+( ͒˃⌂˂ ͒) _punctuation_^
+(°ㅂ° ╬) _punctuation_^
+(ʘ言ʘ╬) _punctuation_^
+(Ò皿Ó╬) _punctuation_^
+(-`д´-) _punctuation_^
+눈_눈 _punctuation_^
+(⋋▂⋌) _punctuation_^
+(¬▂¬) _punctuation_^
+ಠ▃ಠ _punctuation_^
+(＞x＜) _punctuation_^
+╰（‵□′）╯ _punctuation_^
+(>人<) _punctuation_^
+(>_<) _punctuation_^
+(╬•᷅д•᷄╬) _punctuation_^
+(,,Ծ‸Ծ,,) _punctuation_^
+〴⋋_⋌〵 _punctuation_^
+-`д´- _punctuation_^
+Σ(▼□▼メ) _punctuation_^
+＼`•̀益•́´／ _punctuation_^
+╚|░☀▄☀░|╝ _punctuation_^
+(¬_¬) _punctuation_^
+ಠ_ಠ _punctuation_^
+⋋_⋌ _punctuation_^
+(눈_눈) _punctuation_^
+(//●⁰౪⁰●)// _punctuation_^
+(◔ д◔) _punctuation_^
+(◣_◢) _punctuation_^
+(┳◇┳) _punctuation_^
+(`o´) _punctuation_^
+(⋋▂⋌) _punctuation_^
+o_O || _punctuation_^
+ㅇㅁㅇ _punctuation_^
+Σ(° △ °|||) _punctuation_^
+(@~@)? _punctuation_^
+(＞x＜) _punctuation_^
+(＞﹏＜) _punctuation_^
+(ノˋロˊ)ノ彡┻━┻ _punctuation_^
+┬─┬ノ(ˋ口ˊノ) _punctuation_^
+(ノ>◞౪◟<‵)ﾉｼ彡┻━┻ _punctuation_^
+┬─┬ノ(>◞౪◟<ノ) _punctuation_^
+(ノˊ_>ˋ)ノ彡┻━┻ _punctuation_^
+┬─┬ノ(ˊ<_ˋノ) _punctuation_^
+(ノ*ロ*)ノ彡┻━┻ _punctuation_^
+(ノ-ロ-)ノ彡┻━┻ _punctuation_^
+(╯￣(工)￣)╯╧╧ _punctuation_^
+┬─┬ノ(￣(工)￣ノ) _punctuation_^
+ノ`∀ˊ)∀ﾟ)ノ彡┻━┻ _punctuation_^
+(ノ‧ω‧)ノ彡┻━┻ _punctuation_^
+┬─┬ノ(ΘДΘノ) _punctuation_^
+┬─┬ノ(○゜▽゜○ノ) _punctuation_^
+┴─┴︵\(◕‿‿◕\) _punctuation_^
+(╯°Д°)╯┻━┻ _punctuation_^
+(╯°O°)╯┻━┻ _punctuation_^
+(╯'-')╯┻━┻ _punctuation_^
+(*≥▽≤)ツ┏━┓ _punctuation_^
